@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Arishk Singh — Portfolio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --gold:    #f5c842;
+      --gold-dim:#a88c2a;
+      --dark:    #060610;
+      --panel:   rgba(8,8,16,0.92);
+      --glass:   rgba(245,200,66,0.06);
+      --glow:    0 0 24px rgba(245,200,66,0.4);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Rajdhani', sans-serif;
+      background: var(--dark);
+      color: #e0dcd0;
+      overflow-x: hidden;
+    }
+
+    /* ── Full-page Three.js canvas ── */
+    #main-canvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+    }
+
+    /* ── Scrollable overlay ── */
+    .overlay {
+      position: relative;
+      z-index: 2;
+      pointer-events: none;       /* let scroll + mouse pass through to body */
+    }
+    .overlay > * {
+      pointer-events: auto;       /* re-enable on actual content */
+    }
+
+    /* ── Hero ── */
+    .hero {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 60px 20px 20px;
+      text-align: center;
+      pointer-events: none;
+    }
+
+    .photo-ring {
+      position: relative;
+      width: 200px; height: 200px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 28px;
+      perspective: 600px;
+    }
+    .photo-ring::before {
+      content: '';
+      position: absolute; inset: -6px;
+      border-radius: 50%;
+      background: conic-gradient(var(--gold), transparent 30%, var(--gold) 50%, transparent 70%, var(--gold));
+      animation: spin-ring 5s linear infinite;
+    }
+    .photo-ring::after {
+      content: '';
+      position: absolute; inset: -16px;
+      border-radius: 50%;
+      border: 1px solid rgba(245,200,66,0.12);
+      animation: spin-ring 12s linear infinite reverse;
+    }
+    @keyframes spin-ring { to { transform: rotate(360deg); } }
+
+    .photo-ring img {
+      position: relative; z-index: 1;
+      width: 188px; height: 188px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid var(--dark);
+      box-shadow: var(--glow), 0 0 60px rgba(245,200,66,0.15);
+      animation: float-photo 4s ease-in-out infinite;
+    }
+    @keyframes float-photo {
+      0%,100% { transform: translateY(0) rotateY(0deg); }
+      50%     { transform: translateY(-10px) rotateY(5deg); }
+    }
+
+    .hero h1 {
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(2.2rem, 6vw, 4.2rem);
+      color: var(--gold);
+      text-shadow: 0 0 40px rgba(245,200,66,0.55), 0 0 80px rgba(245,200,66,0.2);
+      letter-spacing: 6px;
+      animation: glow-text 3s ease-in-out infinite alternate;
+      /* 3D transform */
+      transform: perspective(500px) rotateX(5deg);
+    }
+    @keyframes glow-text {
+      from { text-shadow: 0 0 30px rgba(245,200,66,0.4), 0 0 60px rgba(245,200,66,0.15); }
+      to   { text-shadow: 0 0 50px rgba(245,200,66,0.7), 0 0 100px rgba(245,200,66,0.3); }
+    }
+
+    .hero .tagline {
+      margin-top: 10px;
+      font-size: 1.2rem;
+      color: #b0aaa0;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      transform: perspective(500px) rotateX(3deg);
+    }
+
+    .scroll-cue {
+      margin-top: 50px;
+      color: var(--gold-dim);
+      font-size: 0.85rem;
+      letter-spacing: 3px;
+      animation: bob 2.5s ease-in-out infinite;
+    }
+    @keyframes bob {
+      0%,100% { transform: translateY(0); opacity: 0.6; }
+      50%     { transform: translateY(10px); opacity: 1; }
+    }
+
+    /* ── 3D network area spacer ── */
+    .network-spacer {
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+    }
+    .network-spacer p {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1rem;
+      color: var(--gold-dim);
+      letter-spacing: 3px;
+      opacity: 0.6;
+    }
+
+    /* ── Section cards ── */
+    .sections-wrapper {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 60px 20px 100px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
+      gap: 30px;
+    }
+
+    .section-card {
+      background: var(--panel);
+      border: 1px solid rgba(245,200,66,0.12);
+      border-radius: 18px;
+      padding: 34px 30px;
+      backdrop-filter: blur(14px);
+      transition: transform 0.4s cubic-bezier(.22,.68,0,1.1), box-shadow 0.4s, border-color 0.4s;
+      transform: perspective(600px) rotateX(2deg) rotateY(-1deg);
+    }
+    .section-card:hover {
+      transform: perspective(600px) rotateX(0deg) rotateY(0deg) translateY(-8px) scale(1.03);
+      border-color: var(--gold);
+      box-shadow: var(--glow);
+    }
+
+    .section-card h2 {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.3rem;
+      color: var(--gold);
+      margin-bottom: 16px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .section-card h2 .icon { font-size: 1.5rem; }
+
+    .section-card p, .section-card ul {
+      font-size: 1rem; line-height: 1.75; color: #c4bfb4;
+    }
+    .section-card ul { list-style: none; padding: 0; }
+    .section-card ul li::before { content: '▸ '; color: var(--gold); }
+
+    .tag-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    .tag {
+      background: var(--glass);
+      border: 1px solid rgba(245,200,66,0.22);
+      border-radius: 20px;
+      padding: 5px 15px;
+      font-size: 0.85rem;
+      color: var(--gold);
+      transition: background 0.3s, transform 0.3s;
+    }
+    .tag:hover { background: rgba(245,200,66,0.15); transform: scale(1.08); }
+
+    .social-links { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+    .social-links a {
+      color: var(--gold);
+      text-decoration: none;
+      border: 1px solid rgba(245,200,66,0.3);
+      border-radius: 10px;
+      padding: 8px 20px;
+      font-size: 0.95rem;
+      transition: background 0.3s, color 0.3s, transform 0.3s;
+    }
+    .social-links a:hover {
+      background: var(--gold);
+      color: var(--dark);
+      transform: translateY(-3px);
+    }
+
+    footer {
+      position: relative; z-index: 2;
+      text-align: center;
+      padding: 28px;
+      font-size: 0.85rem;
+      color: #555;
+      border-top: 1px solid rgba(245,200,66,0.06);
+    }
+
+    /* Tooltip */
+    #sphere-tooltip {
+      position: fixed;
+      pointer-events: none;
+      background: var(--panel);
+      border: 1px solid var(--gold);
+      border-radius: 8px;
+      padding: 8px 18px;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.82rem;
+      color: var(--gold);
+      box-shadow: var(--glow);
+      opacity: 0;
+      transition: opacity 0.15s;
+      z-index: 200;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Full-screen Three.js -->
+  <canvas id="main-canvas"></canvas>
+  <div id="sphere-tooltip"></div>
+
+  <!-- Scrollable content overlay -->
+  <div class="overlay">
+
+    <section class="hero">
+      <div class="photo-ring">
+        <!--
+          ╔══════════════════════════════════════════════╗
+          ║  DROP YOUR PHOTO HERE as "photo.jpg" in the  ║
+          ║  same folder, or change the src below.       ║
+          ╚══════════════════════════════════════════════╝
+        -->
+        <img src="photo.jpg" alt="Arishk Singh" id="hero-photo"
+             onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22188%22 height=%22188%22><rect width=%22188%22 height=%22188%22 rx=%2294%22 fill=%22%23101020%22/><text x=%2294%22 y=%22105%22 text-anchor=%22middle%22 fill=%22%23f5c842%22 font-size=%2256%22 font-family=%22sans-serif%22 font-weight=%22bold%22>A</text></svg>';" />
+      </div>
+      <h1>ARISHK SINGH</h1>
+      <p class="tagline">Developer · Creator · Explorer</p>
+      <p class="scroll-cue">⟡ scroll down to explore ⟡</p>
+    </section>
+
+    <div class="network-spacer">
+      <p>⬡ interactive 3D network — drag to orbit ⬡</p>
+    </div>
+
+    <!-- Section Cards -->
+    <div class="sections-wrapper">
+      <div class="section-card" id="sec-projects">
+        <h2><span class="icon">🚀</span> Projects</h2>
+        <ul>
+          <li>Project Alpha — Full-stack web application</li>
+          <li>Project Beta — Machine-learning pipeline</li>
+          <li>Project Gamma — Mobile cross-platform app</li>
+        </ul>
+      </div>
+      <div class="section-card" id="sec-certificates">
+        <h2><span class="icon">📜</span> Certificates</h2>
+        <ul>
+          <li>AWS Cloud Practitioner</li>
+          <li>Google Data Analytics</li>
+          <li>Meta Front-End Developer</li>
+        </ul>
+      </div>
+      <div class="section-card" id="sec-skills">
+        <h2><span class="icon">⚙️</span> Skills</h2>
+        <div class="tag-list">
+          <span class="tag">JavaScript</span><span class="tag">Python</span>
+          <span class="tag">React</span><span class="tag">Node.js</span>
+          <span class="tag">Three.js</span><span class="tag">SQL</span>
+          <span class="tag">Docker</span><span class="tag">Git</span>
+          <span class="tag">Figma</span>
+        </div>
+      </div>
+      <div class="section-card" id="sec-interests">
+        <h2><span class="icon">🔭</span> Interests</h2>
+        <div class="tag-list">
+          <span class="tag">AI / ML</span><span class="tag">Web3</span>
+          <span class="tag">Astrophysics</span><span class="tag">Open Source</span>
+          <span class="tag">Game Dev</span><span class="tag">Robotics</span>
+        </div>
+      </div>
+      <div class="section-card" id="sec-contact">
+        <h2><span class="icon">📡</span> Contact / Collaboration</h2>
+        <p>Open to freelance work, open-source collaboration, and internship opportunities.</p>
+        <p style="margin-top:8px;">✉️ <a href="mailto:arishk@example.com" style="color:var(--gold);">arishk@example.com</a></p>
+      </div>
+      <div class="section-card" id="sec-socials">
+        <h2><span class="icon">🌐</span> Socials</h2>
+        <div class="social-links">
+          <a href="#">GitHub</a><a href="#">LinkedIn</a>
+          <a href="#">Twitter / X</a><a href="#">Instagram</a>
+          <a href="#">Dev.to</a>
+        </div>
+      </div>
+      <div class="section-card" id="sec-internships">
+        <h2><span class="icon">🏢</span> Internships</h2>
+        <ul>
+          <li>Software Intern — TechCorp (Summer 2025)</li>
+          <li>Data Science Intern — DataLab (Winter 2024)</li>
+        </ul>
+      </div>
+    </div>
+
+    <footer>&copy; 2026 Arishk Singh — Crafted in the cosmos</footer>
+  </div>
+
+  <!-- THREE.JS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script>
+  (() => {
+    'use strict';
+
+    /* ============================================================
+       RENDERER / SCENE / CAMERA
+    ============================================================ */
+    const canvas   = document.getElementById('main-canvas');
+    const tooltip  = document.getElementById('sphere-tooltip');
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setClearColor(0x060610, 1);
+
+    const scene  = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 2000);
+    camera.position.set(0, 0, 22);
+
+    /* ============================================================
+       LIGHTS
+    ============================================================ */
+    scene.add(new THREE.AmbientLight(0xffffff, 0.3));
+
+    const sun = new THREE.PointLight(0xf5c842, 2.5, 80);
+    sun.position.set(0, 0, 0);
+    scene.add(sun);
+
+    const rim = new THREE.DirectionalLight(0xf5c842, 0.5);
+    rim.position.set(8, 12, 10);
+    scene.add(rim);
+
+    const fill = new THREE.PointLight(0x3344aa, 0.6, 50);
+    fill.position.set(-10, -5, 8);
+    scene.add(fill);
+
+    /* ============================================================
+       STARFIELD  (deep background — 3 layers)
+    ============================================================ */
+    function makeStars(count, spread, size, color) {
+      const geo = new THREE.BufferGeometry();
+      const pos = new Float32Array(count * 3);
+      for (let i = 0; i < count; i++) {
+        pos[i*3]   = (Math.random()-0.5) * spread;
+        pos[i*3+1] = (Math.random()-0.5) * spread;
+        pos[i*3+2] = (Math.random()-0.5) * spread;
+      }
+      geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+      return new THREE.Points(geo, new THREE.PointsMaterial({
+        color, size, transparent: true, opacity: 0.85, sizeAttenuation: true
+      }));
+    }
+
+    const starsA = makeStars(3000, 500, 0.25, 0xf5c842);
+    const starsB = makeStars(2000, 600, 0.15, 0xffffff);
+    const starsC = makeStars(1500, 400, 0.35, 0xffd866);
+    scene.add(starsA, starsB, starsC);
+
+    /* ============================================================
+       NEBULA / GALAXY CLOUDS  (textured sprites)
+    ============================================================ */
+    function createNebulaSprite(x, y, z, scale, color, opacity) {
+      const c  = document.createElement('canvas');
+      c.width  = 256; c.height = 256;
+      const ctx = c.getContext('2d');
+      const g  = ctx.createRadialGradient(128,128,0, 128,128,128);
+      g.addColorStop(0, color);
+      g.addColorStop(0.4, color.replace(')', ',0.3)').replace('rgb','rgba'));
+      g.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(0,0,256,256);
+
+      const tex  = new THREE.CanvasTexture(c);
+      const mat  = new THREE.SpriteMaterial({ map: tex, transparent: true, opacity, blending: THREE.AdditiveBlending });
+      const spr  = new THREE.Sprite(mat);
+      spr.position.set(x,y,z);
+      spr.scale.set(scale, scale, 1);
+      return spr;
+    }
+
+    scene.add(createNebulaSprite(-60,  30, -120, 120, 'rgb(245,200,66)',  0.06));
+    scene.add(createNebulaSprite( 80, -20, -150, 150, 'rgb(60,40,140)',   0.05));
+    scene.add(createNebulaSprite( 20,  60, -100, 100, 'rgb(200,160,40)',  0.04));
+    scene.add(createNebulaSprite(-40, -50, -130, 130, 'rgb(80,60,180)',   0.045));
+    scene.add(createNebulaSprite( 50,  40, -180, 160, 'rgb(245,220,100)', 0.035));
+    scene.add(createNebulaSprite(-80, -30, -160, 140, 'rgb(100,80,200)',  0.04));
+
+    /* ============================================================
+       GALAXY SPIRAL  (flat particle disk)
+    ============================================================ */
+    function createGalaxy(cx, cy, cz, arms, pointsPerArm, armSpread, sizeRange, col) {
+      const total = arms * pointsPerArm;
+      const geo   = new THREE.BufferGeometry();
+      const pos   = new Float32Array(total * 3);
+      let idx = 0;
+      for (let a = 0; a < arms; a++) {
+        const baseAngle = (a / arms) * Math.PI * 2;
+        for (let p = 0; p < pointsPerArm; p++) {
+          const r     = (p / pointsPerArm) * armSpread;
+          const angle = baseAngle + r * 0.6 + (Math.random()-0.5)*0.4;
+          pos[idx++] = cx + Math.cos(angle) * r + (Math.random()-0.5)*1.5;
+          pos[idx++] = cy + (Math.random()-0.5)*0.8;
+          pos[idx++] = cz + Math.sin(angle) * r + (Math.random()-0.5)*1.5;
+        }
+      }
+      geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+      const mat = new THREE.PointsMaterial({
+        color: col, size: sizeRange, transparent: true, opacity: 0.5,
+        sizeAttenuation: true, blending: THREE.AdditiveBlending
+      });
+      return new THREE.Points(geo, mat);
+    }
+
+    const galaxy1 = createGalaxy(-50, 15, -90,  4, 500, 30, 0.2, 0xf5c842);
+    const galaxy2 = createGalaxy( 60,-10, -110, 3, 400, 25, 0.18, 0xeebb33);
+    const galaxy3 = createGalaxy( 0,  30, -140, 5, 600, 35, 0.22, 0xffd866);
+    scene.add(galaxy1, galaxy2, galaxy3);
+
+    /* ============================================================
+       SPHERE NETWORK  (main interactive element)
+    ============================================================ */
+    const nodeData = [
+      { label: 'Projects',      id: 'sec-projects',     col: 0xf5c842 },
+      { label: 'Certificates',  id: 'sec-certificates', col: 0xe8b830 },
+      { label: 'Skills',        id: 'sec-skills',       col: 0xffd866 },
+      { label: 'Interests',     id: 'sec-interests',    col: 0xc8a82a },
+      { label: 'Contact',       id: 'sec-contact',      col: 0xffea70 },
+      { label: 'Socials',       id: 'sec-socials',      col: 0xd4aa20 },
+      { label: 'Internships',   id: 'sec-internships',  col: 0xebc934 },
+    ];
+
+    const group   = new THREE.Group();
+    scene.add(group);
+    const spheres = [];
+    const labels  = [];
+    const RADIUS  = 7;
+
+    /* ── procedural texture for spheres ── */
+    function makeTexture(baseColor) {
+      const c   = document.createElement('canvas');
+      c.width   = 512; c.height = 512;
+      const ctx = c.getContext('2d');
+
+      // Base gradient
+      const g = ctx.createRadialGradient(256,200,40, 256,256,260);
+      const r = (baseColor>>16)&0xff, gv = (baseColor>>8)&0xff, b = baseColor&0xff;
+      g.addColorStop(0, `rgba(${Math.min(255,r+60)},${Math.min(255,gv+60)},${Math.min(255,b+60)},1)`);
+      g.addColorStop(0.6, `rgb(${r},${gv},${b})`);
+      g.addColorStop(1, `rgb(${Math.max(0,r-50)},${Math.max(0,gv-50)},${Math.max(0,b-50)})`);
+      ctx.fillStyle = g;
+      ctx.fillRect(0,0,512,512);
+
+      // Tech grid lines
+      ctx.strokeStyle = `rgba(255,255,255,0.07)`;
+      ctx.lineWidth = 1;
+      for (let i = 0; i < 512; i += 32) {
+        ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,512); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(0,i); ctx.lineTo(512,i); ctx.stroke();
+      }
+
+      // Circuit-like dots
+      ctx.fillStyle = `rgba(255,255,255,0.12)`;
+      for (let i = 0; i < 50; i++) {
+        const x = Math.random()*512, y = Math.random()*512;
+        ctx.beginPath(); ctx.arc(x,y, 2+Math.random()*3, 0, Math.PI*2); ctx.fill();
+      }
+
+      // Hex pattern overlay
+      ctx.strokeStyle = `rgba(255,255,255,0.05)`;
+      ctx.lineWidth = 0.8;
+      for (let row = 0; row < 18; row++) {
+        for (let col = 0; col < 18; col++) {
+          const cx = col*32 + (row%2)*16;
+          const cy = row*30;
+          drawHex(ctx, cx, cy, 14);
+        }
+      }
+
+      return new THREE.CanvasTexture(c);
+    }
+
+    function drawHex(ctx, cx, cy, r) {
+      ctx.beginPath();
+      for (let i = 0; i < 6; i++) {
+        const a = Math.PI/3*i - Math.PI/6;
+        const method = i === 0 ? 'moveTo' : 'lineTo';
+        ctx[method](cx+Math.cos(a)*r, cy+Math.sin(a)*r);
+      }
+      ctx.closePath(); ctx.stroke();
+    }
+
+    /* ── Create text sprite for labels ── */
+    function makeLabel(text) {
+      const c   = document.createElement('canvas');
+      c.width   = 512; c.height = 96;
+      const ctx = c.getContext('2d');
+      ctx.font  = 'bold 38px Orbitron, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+
+      // Glow
+      ctx.shadowColor = '#f5c842';
+      ctx.shadowBlur  = 16;
+      ctx.fillStyle   = '#f5c842';
+      ctx.fillText(text, 256, 48);
+      ctx.shadowBlur = 0;
+
+      // Crisp pass
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText(text, 256, 48);
+
+      const tex = new THREE.CanvasTexture(c);
+      const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false });
+      const spr = new THREE.Sprite(mat);
+      spr.scale.set(3.6, 0.7, 1);
+      return spr;
+    }
+
+    /* ── build spheres ── */
+    nodeData.forEach((n, i) => {
+      const angle = (i / nodeData.length) * Math.PI * 2 - Math.PI / 2;
+      const x = Math.cos(angle) * RADIUS;
+      const y = Math.sin(angle) * RADIUS;
+      const z = (Math.random()-0.5) * 3;
+
+      // Sphere
+      const geo = new THREE.SphereGeometry(0.75, 64, 64);
+      const tex = makeTexture(n.col);
+      const mat = new THREE.MeshPhysicalMaterial({
+        map: tex,
+        metalness: 0.55,
+        roughness: 0.2,
+        clearcoat: 1.0,
+        clearcoatRoughness: 0.05,
+        emissive: n.col,
+        emissiveIntensity: 0.12,
+      });
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.position.set(x, y, z);
+      mesh.userData = { label: n.label, id: n.id, basePos: new THREE.Vector3(x,y,z) };
+      group.add(mesh);
+      spheres.push(mesh);
+
+      // Orbit ring
+      const ringGeo = new THREE.TorusGeometry(0.95, 0.02, 16, 64);
+      const ringMat = new THREE.MeshBasicMaterial({ color: n.col, transparent: true, opacity: 0.2 });
+      const ring = new THREE.Mesh(ringGeo, ringMat);
+      ring.position.copy(mesh.position);
+      ring.userData._isRing = true;
+      group.add(ring);
+
+      // Label above sphere
+      const lbl = makeLabel(n.label);
+      lbl.position.set(x, y + 1.25, z);
+      lbl.userData._isLabel = true;
+      lbl.userData._parentIdx = i;
+      group.add(lbl);
+      labels.push(lbl);
+    });
+
+    /* ── Central hub ── */
+    const hubGeo = new THREE.SphereGeometry(0.55, 64, 64);
+    const hubTex = makeTexture(0xf5c842);
+    const hubMat = new THREE.MeshPhysicalMaterial({
+      map: hubTex, metalness: 0.9, roughness: 0.05,
+      emissive: 0xf5c842, emissiveIntensity: 0.35,
+      clearcoat: 1.0
+    });
+    const hub = new THREE.Mesh(hubGeo, hubMat);
+    hub.userData = { label: 'Arishk Singh', id: null };
+    group.add(hub);
+
+    const hubLabel = makeLabel('⬡');
+    hubLabel.position.set(0, 0.9, 0);
+    hubLabel.scale.set(1.2, 0.5, 1);
+    group.add(hubLabel);
+
+    /* ── Threads ── */
+    function buildCurve(a, b, sag) {
+      const mid = new THREE.Vector3().addVectors(a, b).multiplyScalar(0.5);
+      mid.z += sag;
+      return new THREE.QuadraticBezierCurve3(a.clone(), mid, b.clone());
+    }
+
+    const threads = [];
+
+    // Hub → each sphere
+    spheres.forEach(s => {
+      const curve  = buildCurve(hub.position, s.position, (Math.random()-0.5)*2.5);
+      const pts    = curve.getPoints(40);
+      const lGeo   = new THREE.BufferGeometry().setFromPoints(pts);
+      const lMat   = new THREE.LineBasicMaterial({ color: 0xf5c842, transparent: true, opacity: 0.3 });
+      const line   = new THREE.Line(lGeo, lMat);
+      line.userData._isThread = true;
+      group.add(line);
+      threads.push(line);
+    });
+
+    // Adjacent ring
+    for (let i = 0; i < spheres.length; i++) {
+      const j    = (i+1) % spheres.length;
+      const curve = buildCurve(spheres[i].position, spheres[j].position, (Math.random()-0.5)*1.8);
+      const pts   = curve.getPoints(30);
+      const lGeo  = new THREE.BufferGeometry().setFromPoints(pts);
+      const lMat  = new THREE.LineBasicMaterial({ color: 0xf5c842, transparent: true, opacity: 0.12 });
+      const line  = new THREE.Line(lGeo, lMat);
+      line.userData._isThread = true;
+      group.add(line);
+      threads.push(line);
+    }
+
+    /* ── Floating particle dust around network ── */
+    const dustA = makeStars(800, 30, 0.05, 0xf5c842);
+    const dustB = makeStars(400, 25, 0.08, 0xffffff);
+    group.add(dustA, dustB);
+
+    /* ============================================================
+       ORBIT CONTROLS  (manual — no dependency)
+    ============================================================ */
+    let isDragging = false, prevMX = 0, prevMY = 0;
+    let rotX = 0, rotY = 0;
+    let autoRotate = true;
+    let autoResumeTimer = null;
+
+    canvas.addEventListener('mousedown', e => { isDragging = true; prevMX = e.clientX; prevMY = e.clientY; autoRotate = false; clearTimeout(autoResumeTimer); });
+    window.addEventListener('mouseup', () => { isDragging = false; autoResumeTimer = setTimeout(() => autoRotate = true, 4000); });
+
+    canvas.addEventListener('mousemove', e => {
+      if (!isDragging) return;
+      rotY += (e.clientX - prevMX) * 0.005;
+      rotX += (e.clientY - prevMY) * 0.005;
+      rotX  = Math.max(-1.2, Math.min(1.2, rotX));
+      prevMX = e.clientX; prevMY = e.clientY;
+    });
+
+    // Touch
+    canvas.addEventListener('touchstart', e => {
+      if (e.touches.length === 1) { isDragging = true; prevMX = e.touches[0].clientX; prevMY = e.touches[0].clientY; autoRotate = false; clearTimeout(autoResumeTimer); }
+    }, { passive: true });
+    canvas.addEventListener('touchmove', e => {
+      if (!isDragging || e.touches.length !== 1) return;
+      rotY += (e.touches[0].clientX - prevMX) * 0.005;
+      rotX += (e.touches[0].clientY - prevMY) * 0.005;
+      rotX  = Math.max(-1.2, Math.min(1.2, rotX));
+      prevMX = e.touches[0].clientX; prevMY = e.touches[0].clientY;
+    }, { passive: true });
+    canvas.addEventListener('touchend', () => { isDragging = false; autoResumeTimer = setTimeout(() => autoRotate = true, 4000); }, { passive: true });
+
+    /* ============================================================
+       SCROLL  — smooth page scroll even when pointer is over canvas
+    ============================================================ */
+    // Let the page scroll normally; canvas never captures wheel for zoom
+    // (zoom is secondary — smooth scrolling is priority per user request)
+    // We just let default browser scroll happen everywhere.
+
+    /* ============================================================
+       RAYCASTER — hover tooltip & click to scroll
+    ============================================================ */
+    const raycaster = new THREE.Raycaster();
+    const mouse     = new THREE.Vector2();
+    let hovered     = null;
+
+    canvas.addEventListener('mousemove', e => {
+      const rect = canvas.getBoundingClientRect();
+      mouse.x =  ((e.clientX - rect.left) / rect.width)  * 2 - 1;
+      mouse.y = -((e.clientY - rect.top)  / rect.height) * 2 + 1;
+
+      raycaster.setFromCamera(mouse, camera);
+      const hits = raycaster.intersectObjects(spheres.concat([hub]));
+
+      if (hits.length) {
+        const obj = hits[0].object;
+        tooltip.style.opacity = '1';
+        tooltip.style.left = e.clientX + 14 + 'px';
+        tooltip.style.top  = e.clientY + 14 + 'px';
+        tooltip.textContent = obj.userData.label;
+        if (hovered !== obj) { if (hovered) resetHover(hovered); hovered = obj; }
+        obj.material.emissiveIntensity = 0.6;
+        obj.scale.set(1.18, 1.18, 1.18);
+        canvas.style.cursor = 'pointer';
+      } else {
+        tooltip.style.opacity = '0';
+        if (hovered) { resetHover(hovered); hovered = null; }
+        canvas.style.cursor = isDragging ? 'grabbing' : 'default';
+      }
+    });
+
+    canvas.addEventListener('click', () => {
+      if (hovered && hovered.userData.id) {
+        const el = document.getElementById(hovered.userData.id);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          el.style.borderColor = 'var(--gold)';
+          el.style.boxShadow   = 'var(--glow)';
+          setTimeout(() => { el.style.borderColor = ''; el.style.boxShadow = ''; }, 2500);
+        }
+      }
+    });
+
+    function resetHover(obj) {
+      obj.material.emissiveIntensity = 0.12;
+      obj.scale.set(1, 1, 1);
+    }
+
+    /* ============================================================
+       PARALLAX — camera reacts to scroll position
+    ============================================================ */
+    let scrollY = 0;
+    window.addEventListener('scroll', () => { scrollY = window.pageYOffset; });
+
+    /* ============================================================
+       ANIMATION LOOP
+    ============================================================ */
+    const clock = new THREE.Clock();
+
+    function animate() {
+      requestAnimationFrame(animate);
+      const t = clock.getElapsedTime();
+
+      // Auto-rotate
+      if (autoRotate) rotY += 0.0018;
+      group.rotation.x = rotX;
+      group.rotation.y = rotY;
+
+      // Bobbing spheres
+      spheres.forEach((s, i) => {
+        const bp = s.userData.basePos;
+        s.position.y = bp.y + Math.sin(t * 0.7 + i * 1.1) * 0.28;
+        s.position.z = bp.z + Math.cos(t * 0.5 + i * 1.5) * 0.18;
+        // Rotate sphere on axis for texture movement
+        s.rotation.y = t * 0.3 + i;
+        s.rotation.x = Math.sin(t * 0.2 + i) * 0.3;
+      });
+
+      // Update label positions to follow spheres
+      labels.forEach(lbl => {
+        const idx = lbl.userData._parentIdx;
+        const s   = spheres[idx];
+        lbl.position.set(s.position.x, s.position.y + 1.25, s.position.z);
+      });
+
+      // Ring animations
+      group.children.forEach(child => {
+        if (child.userData._isRing) {
+          child.rotation.x = t * 0.6;
+          child.rotation.z = t * 0.3;
+        }
+      });
+
+      // Hub pulse
+      const sc = 1 + Math.sin(t * 1.5) * 0.06;
+      hub.scale.set(sc, sc, sc);
+      hub.rotation.y = t * 0.5;
+
+      // Star rotation
+      starsA.rotation.y = t * 0.008;
+      starsA.rotation.x = t * 0.003;
+      starsB.rotation.y = -t * 0.005;
+      starsC.rotation.z = t * 0.004;
+
+      // Galaxy rotation
+      galaxy1.rotation.y = t * 0.012;
+      galaxy2.rotation.y = -t * 0.009;
+      galaxy3.rotation.y = t * 0.007;
+
+      // Dust rotation
+      dustA.rotation.y = t * 0.02;
+      dustB.rotation.x = t * 0.015;
+
+      // Camera parallax from scroll
+      const scrollFrac = scrollY / (document.body.scrollHeight - window.innerHeight || 1);
+      camera.position.y = -scrollFrac * 6;
+      camera.position.z = 22 - scrollFrac * 8;
+      camera.lookAt(group.position);
+
+      renderer.render(scene, camera);
+    }
+
+    /* ── Resize ── */
+    window.addEventListener('resize', () => {
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+    });
+
+    animate();
+  })();
+  </script>
+</body>
+</html>
+
